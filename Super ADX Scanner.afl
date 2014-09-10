@@ -1,0 +1,71 @@
+//Super ADX Coded by Karthikmarar. Blog. www.karthikmarar.blogspot.com email. karthikmarar@yahoo.com
+//System based on the free clone availablein Metatrader
+// Public release for personal use only.
+//Please do not commercialize this indicator in its original or modified form.
+_SECTION_BEGIN("Super ADX Clone");
+
+WavePeriod = Param("WAVE PERIOD",10,5,30,1);
+AvgPeriod = Param("Smoothing Period",21,9,45,1);
+VAR1 = EMA(C, WavePeriod);
+VAR2 = (abs(H+C+L)/ 3.0 - VAR1);
+VAR3 = EMA(VAR2,WavePeriod);
+VAR4 = IIf(VAR3 > 0,((H+L+C) / 3.0 - VAR1) / (0.015 * VAR3),0);
+VAR5 = EMA(VAR4, AvgPeriod);
+VAR6 = MA(VAR5, 4);
+JA = IIf (VAR5 >= VAR6 AND Ref(VAR5,-1) <= Ref(VAR6,-1) AND VAR5 <= -50, 1,0);
+JB = IIf (VAR5 <= VAR6 AND Ref(VAR5,-1) >= Ref(VAR6,-1) AND VAR5 >= 53,1,0);
+AX1 = ADX(14);
+AX2 = Ref(AX1,-1);
+AX3 = Ref(AX1,-2);
+JX = MACD(12,26);
+JXS = Signal(12,26,9);
+JX1 = Ref(JX,-1);
+JX1S = Ref(JXS,-1);
+ADXFL1 = AX2 > 35 AND AX1 < AX2 AND AX2 > AX3;
+ADXFL2 = AX1 < 10 AND AX1 > AX2 AND AX2 < AX3;
+MACDFL1 = IIf (JX > JX1 AND JXS <= JX1S,1,0);
+MACDFL2 = IIf (JX < JX1 AND JXS >= JX1S,1,0);
+MACDFL  = MACDFL1 OR MACDFL2;
+YB = IIf(ADXFL1 AND (JA == 1 OR JB == 1),1,0); //YELLOW BAR
+WBMACD = IIf(ADXFL1 AND MACDFL ,1,0);
+WB = IIf(ADXFL1,1,0);
+RB = IIf(ADXFL2,1,0);
+MBC = WB OR WBMACD;
+TB = Sum(MBC, 16);
+TBARS = TB == 3 AND Ref(TB,-1)==2;
+WriteVal(TBars);
+PL = IIf(TBARS,40,IIf(YB,35,IIf(WBMACD,30,IIf(WB,25,IIf(RB,20,Null)))));
+BCOLOR = IIf(tbars,colorCustom12,IIf(YB,colorYellow,IIf(WBMACD,colorViolet,IIf(WB,colorWhite,IIf(RB,colorRed,colorBlack)))));
+SetBarFillColor( BCOLOR);
+yb1=IIf(yb,30,0);
+wb1=IIf(wb,25,0);
+wbmacd1 =IIf(wbmacd,20,0);
+rb1 = IIf(rb,15,0);
+PlotOHLC(0,pl,0,pl,"",BCOLOR,styleCandle|styleThick);
+PlotShapes( IIf(tbars ,shapeSmallSquare,Null), colorCustom12,0,40,0);
+PlotShapes( IIf(yb ,shapeSmallSquare,Null), colorYellow,0,35,0);
+PlotShapes( IIf(wbmacd,shapeSmallSquare,Null), colorViolet,0,30,0);
+PlotShapes( IIf(wb,shapeSmallSquare,Null), colorWhite,0,25,0);
+PlotShapes( IIf(rb,shapeSmallSquare,Null), colorRed,0,20,-0);
+
+//========================= Header with Comments ====================================
+if( Status("action") == actionIndicator ) 
+(
+Title = EncodeColor(colorWhite)+ "SUPER ADX Clone" + " - " +  Name() + " - " + EncodeColor(colorRed)+ Interval(2) + EncodeColor(colorWhite) +
+ "  - " + Date() +" - " +EncodeColor(colorLime)+ "Volume= "+WriteVal(V)+"--"+EncodeColor(colorYellow)+
+("\n Super ADX Alert :  ")+WriteIf(yb,EncodeColor(colorYellow)+" White Bar + Trend Wave",
+WriteIf(tbars,EncodeColor(colorCustom12)+" White Bar + Trend Wave",
+WriteIf(WBmacd,EncodeColor(colorViolet)+"White Bar + MACD, EXPECT REVERSAL",WriteIf(WB,EncodeColor(colorWhite)+"White Bar - EXIT",
+WriteIf(rb,EncodeColor(colorRed)+"Red Bar - Big Move","" ))))));
+
+
+Filter = tbars==1 OR yb ==1 OR wbmacd==1 OR wb ==1 OR rb==1;
+AddColumn( tbars, "TBARS",bkgndColor  = colorCustom12 );
+AddColumn( yb, "YB",bkgndColor  = colorYellow );
+AddColumn( wbmacd, "WBMACD",bkgndColor  = colorViolet );
+AddColumn( wb, "WB",bkgndColor  = colorWhite );
+AddColumn( rb, "RB",bkgndColor  = colorRed );
+
+
+
+_SECTION_END();
